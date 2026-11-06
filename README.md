@@ -73,8 +73,13 @@ Next.js dashboard
 
 ### Dashboard
 
-* Customer details form with dropdowns for every categorical field
-* Churn prediction and probability display
+* Quick-start example customers (new, mid-term and loyal)
+* Yes/No toggles and dropdowns for every categorical field
+* Dependent fields stay consistent (no internet service sets all add-ons automatically)
+* One-click estimate for total charges
+* Animated risk gauge with Low, Elevated and High risk bands
+* Readable error messages when the API rejects a value
+* Responsive layout with keyboard-friendly controls
 * API status badge (connecting, online, unreachable)
 * Server wake-up on page load for sleeping free-tier hosts
 * Slow-start notice when the first request takes longer than 5 seconds
@@ -407,8 +412,10 @@ frontend/
 │
 ├── app/
 │   ├── layout.tsx         # Root layout and metadata
-│   ├── page.tsx           # Prediction dashboard
+│   ├── page.tsx           # Prediction dashboard (state, API calls)
 │   └── globals.css        # Global styles
+├── components/            # Form fields, result panel with gauge, status badge
+├── lib/                   # Types, form configuration and helpers
 ├── public/                # Static assets
 │
 ├── package.json           # Frontend dependencies
