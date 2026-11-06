@@ -151,7 +151,15 @@ Optional
 
 ### Environment Setup
 
-Create a file named `.env` inside `backend/` (it is git-ignored):
+Copy
+
+`backend/.env.example`
+
+to
+
+`backend/.env` (git-ignored)
+
+and fill in the values. The required variables are
 
 ```text
 MLFLOW_TRACKING_URI=https://dagshub.com/<username>/<repo>.mlflow
