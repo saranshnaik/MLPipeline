@@ -48,7 +48,7 @@ const initialCustomer: Customer = {
   TechSupport: "No",
   StreamingTV: "No",
   StreamingMovies: "No",
-  Contract: "month-to-month",
+  Contract: "Month-to-month",
   PaperlessBilling: "Yes",
   PaymentMethod: "Electronic check",
   MonthlyCharges: 70,
