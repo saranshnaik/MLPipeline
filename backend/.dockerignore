@@ -1,3 +1,4 @@
+.venv/
 venv/
 __pycache__/
 *.py[cod]
@@ -5,3 +6,11 @@ __pycache__/
 .git/
 .env
 .env.*
+*.env
+
+# Not needed at runtime
+tests/
+training/
+model/
+pytest.ini
+requirements-dev.txt
