@@ -1,0 +1,31 @@
+# Render Blueprint: FastAPI backend on the free tier.
+# Frontend is deployed separately on Vercel (root directory: frontend).
+#
+# Free-tier behaviour: the service sleeps after ~15 min without traffic and takes
+# roughly 30-60 s to wake up. The frontend pings /health on page load to hide most of it.
+services:
+  - type: web
+    name: telco-churn-api
+    runtime: docker
+    plan: free
+    # Paths are relative to the repo root.
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      # Model is loaded from the MLflow Model Registry at startup (not baked into the image).
+      - key: MODEL_URI
+        value: models:/telco-churn@champion
+      - key: MLFLOW_TRACKING_URI
+        value: https://dagshub.com/saransh/MLPipeline.mlflow
+      - key: MLFLOW_DISABLE_AGENT_HINT
+        value: "1"
+      # Secrets and per-environment values: set these in the Render dashboard.
+      - key: MLFLOW_TRACKING_USERNAME
+        sync: false
+      - key: MLFLOW_TRACKING_PASSWORD
+        sync: false
+      # Comma-separated, e.g. https://your-app.vercel.app,http://localhost:3000
+      - key: ALLOWED_ORIGINS
+        sync: false
