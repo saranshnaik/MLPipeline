@@ -1,0 +1,9 @@
+# Pinned to match backend/requirements.txt so the pickled pipeline loads identically
+scikit-learn==1.6.1
+pandas==3.0.6
+numpy==2.4.6
+scipy==1.17.1
+joblib==1.6.0
+mlflow==3.18.0
+matplotlib==3.11.2
+skops==0.16.0

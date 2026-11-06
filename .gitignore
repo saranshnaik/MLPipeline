@@ -9,7 +9,7 @@ __pycache__/
 # MLflow / training
 mlruns/
 mlartifacts/
-training/data/*.csv
+**/training/data/*.csv
 
 # Secrets
 .env
