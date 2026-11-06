@@ -1,7 +1,6 @@
 "use client"
 
-import {useState} from "react";
-import type { FormEvent } from "react";
+import { useEffect, useState } from "react";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
 
@@ -32,6 +31,17 @@ type PredictionResult = {
   churn: boolean;
   churn_probability: number;
 }
+
+type ModelInfo = {
+  source: "registry" | "local";
+  name: string;
+  version: string | null;
+  run_id: string | null;
+  uri: string;
+};
+
+// Free-tier hosts put idle services to sleep; after this long we tell the user why it is slow.
+const SLOW_RESPONSE_MS = 5000;
 
 const initialCustomer: Customer = {
   gender: "Female",
@@ -95,7 +105,33 @@ export default function Home() {
   const [customer, setCustomer] = useState<Customer>(initialCustomer);
   const [result, setResult] = useState<PredictionResult | null>(null);
   const [loading, setLoading] = useState(false);
+  const [slow, setSlow] = useState(false);
   const [error, setError] = useState("");
+  // null = still connecting, true = API answered, false = API unreachable
+  const [serverReady, setServerReady] = useState<boolean | null>(null);
+  const [modelInfo, setModelInfo] = useState<ModelInfo | null>(null);
+
+  // On page load, ping the API. On a free tier this also wakes a sleeping instance
+  // (30-60 s cold start) while the user is still filling in the form.
+  useEffect(() => {
+    const controller = new AbortController();
+
+    async function connect() {
+      try {
+        const health = await fetch(`${API_URL}/health`, { signal: controller.signal });
+        if (!health.ok) throw new Error(`Health check returned ${health.status}`);
+        setServerReady(true);
+
+        const info = await fetch(`${API_URL}/model-info`, { signal: controller.signal });
+        if (info.ok) setModelInfo(await info.json());
+      } catch {
+        if (!controller.signal.aborted) setServerReady(false);
+      }
+    }
+
+    connect();
+    return () => controller.abort();
+  }, []);
 
   function updateField(key: keyof Customer, value: string) {
     setCustomer((previous) => ({
@@ -117,6 +153,8 @@ export default function Home() {
     setLoading(true);
     setError("");
     setResult(null);
+    setSlow(false);
+    const slowTimer = setTimeout(() => setSlow(true), SLOW_RESPONSE_MS);
 
     try {
       const response = await fetch(`${API_URL}/predict`, {
@@ -132,15 +170,25 @@ export default function Home() {
 
       const data: PredictionResult = await response.json();
       setResult(data);
+      setServerReady(true);
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Could not connect to prediction API."
       );
     } finally {
+      clearTimeout(slowTimer);
+      setSlow(false);
       setLoading(false);
     }
-    
   }
+
+  const modelLabel = modelInfo
+    ? `${modelInfo.name}${modelInfo.version ? ` v${modelInfo.version}` : ""}${
+        modelInfo.source === "local" ? " (local file)" : ""
+      }`
+    : serverReady === false
+      ? "unavailable"
+      : "loading...";
 
   const probability = result
     ? Math.round(result.churn_probability * 100)
@@ -162,9 +210,30 @@ export default function Home() {
               trained machine learning model.
             </p>
           </div>
-          <div className="flex items-center gap-2 self-start rounded-full border border-emerald-900 bg-emerald-950/50 px-4 py-2 text-sm text-emerald-300">
-            <span className="h-2 w-2 rounded-full bg-emerald-400" />
-            Prediction dashboard
+          <div
+            role="status"
+            className={`flex items-center gap-2 self-start rounded-full border px-4 py-2 text-sm ${
+              serverReady === true
+                ? "border-emerald-900 bg-emerald-950/50 text-emerald-300"
+                : serverReady === false
+                  ? "border-red-900 bg-red-950/50 text-red-300"
+                  : "border-amber-900 bg-amber-950/50 text-amber-300"
+            }`}
+          >
+            <span
+              className={`h-2 w-2 rounded-full ${
+                serverReady === true
+                  ? "bg-emerald-400"
+                  : serverReady === false
+                    ? "bg-red-400"
+                    : "animate-pulse bg-amber-400"
+              }`}
+            />
+            {serverReady === true
+              ? "API online"
+              : serverReady === false
+                ? "API unreachable"
+                : "Waking up server..."}
           </div>
         </header>
         <div className="grid gap-8 lg:grid-cols-[1.5fr_1fr]">
@@ -291,6 +360,13 @@ export default function Home() {
               {loading ? "Analyzing customer..." : "Predict churn"}
             </button>
 
+            {loading && slow && (
+              <p role="status" className="mt-3 text-center text-sm text-amber-300">
+                The server is waking up (free tier). This can take up to a minute
+                on the first request.
+              </p>
+            )}
+
             {error && (
               <div
                 role="alert"
@@ -384,8 +460,7 @@ export default function Home() {
 
             <div className="mt-8 border-t border-slate-800 pt-5">
               <p className="text-xs text-slate-500">
-                Model: Logistic Regression · Backend: FastAPI · Frontend:
-                Next.js
+                Model: {modelLabel} · Backend: FastAPI · Frontend: Next.js
               </p>
             </div>
           </aside>
