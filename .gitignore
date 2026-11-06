@@ -1,0 +1,24 @@
+# Python
+backend/.venv/
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# MLflow / training
+mlruns/
+mlartifacts/
+training/data/*.csv
+
+# Secrets
+.env
+.env.*
+*.env
+!.env.example
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
